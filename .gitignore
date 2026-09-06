@@ -1,0 +1,38 @@
+# ---- Model weights & checkpoints ----
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+best_model_params.pt
+pretrained_gemma3.pt
+
+# ---- Tokenized corpus (regenerate from the notebook) ----
+*.bin
+train.bin
+validation.bin
+
+# ---- Downloaded datasets ----
+instruction-data.json
+
+# ---- Generated plots ----
+loss-plot.pdf
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# ---- Caches ----
+.cache/
+~/.cache/huggingface/
+.pytest_cache/
+
+# ---- Editors & OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,1026 @@
+<title>Gemma 3 270M Build Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#f7f5f0;
+  --paper-2:#efece4;
+  --rule:#ddd8cc;
+  --ink:#12161d;
+  --ink-2:#3c4149;
+  --muted:#7d776b;
+  --copper:#b4642a;
+  --copper-soft:#f0dfd0;
+  --teal:#2f7d78;
+  --teal-soft:#d8e8e5;
+  --code-bg:#eeebe2;
+  --shadow:0 1px 2px rgba(18,22,29,.06);
+  --maxw:68ch;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12151a;
+    --paper-2:#191d24;
+    --rule:#2b313a;
+    --ink:#eceae4;
+    --ink-2:#c2bfb7;
+    --muted:#8d8a82;
+    --copper:#e0965a;
+    --copper-soft:#3a2a1c;
+    --teal:#6fc0b8;
+    --teal-soft:#16302e;
+    --code-bg:#1c212a;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12151a;
+  --paper-2:#191d24;
+  --rule:#2b313a;
+  --ink:#eceae4;
+  --ink-2:#c2bfb7;
+  --muted:#8d8a82;
+  --copper:#e0965a;
+  --copper-soft:#3a2a1c;
+  --teal:#6fc0b8;
+  --teal-soft:#16302e;
+  --code-bg:#1c212a;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--copper)}
+:focus-visible{outline:2px solid var(--copper);outline-offset:3px;border-radius:2px}
+
+/* ---------- shell ---------- */
+.shell{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 24px 96px;
+}
+@media(min-width:1000px){
+  .shell{grid-template-columns:220px minmax(0,1fr);gap:56px;padding:0 40px 120px}
+}
+
+/* ---------- rail ---------- */
+.rail{display:none}
+@media(min-width:1000px){
+  .rail{
+    display:block;
+    position:sticky;top:0;align-self:start;
+    max-height:100vh;overflow-y:auto;
+    padding:88px 0 40px;
+  }
+}
+.rail h2{
+  font:500 11px/1 "IBM Plex Mono",monospace;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 18px;
+}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rail a{
+  display:grid;grid-template-columns:26px 1fr;gap:6px;
+  padding:5px 8px 5px 0;
+  text-decoration:none;color:var(--ink-2);
+  font-size:13.5px;line-height:1.35;
+  border-left:2px solid transparent;padding-left:12px;
+  transition:color .15s,border-color .15s;
+}
+.rail a:hover{color:var(--copper)}
+.rail a.on{color:var(--ink);border-left-color:var(--copper);font-weight:500}
+.rail .n{font:500 11px/1.5 "IBM Plex Mono",monospace;color:var(--muted)}
+
+/* ---------- masthead ---------- */
+.mast{padding:72px 0 40px;border-bottom:1px solid var(--rule);margin-bottom:48px}
+.eyebrow{
+  font:500 11px/1 "IBM Plex Mono",monospace;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--copper);
+  margin:0 0 20px;
+}
+h1{
+  font-family:Newsreader,Georgia,serif;
+  font-weight:600;font-size:clamp(38px,6vw,62px);line-height:1.02;
+  letter-spacing:-.02em;margin:0 0 20px;text-wrap:balance;
+}
+h1 em{font-style:italic;font-weight:400;color:var(--copper)}
+.standfirst{
+  font-family:Newsreader,Georgia,serif;
+  font-size:20px;line-height:1.55;color:var(--ink-2);
+  max-width:60ch;margin:0 0 36px;
+}
+.facts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+}
+.facts div{background:var(--paper);padding:14px 16px}
+.facts dt{
+  font:500 10.5px/1 "IBM Plex Mono",monospace;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;
+}
+.facts dd{margin:0;font-family:"IBM Plex Mono",monospace;font-size:17px;font-variant-numeric:tabular-nums}
+
+/* ---------- sections ---------- */
+section{padding-top:12px;margin-bottom:60px;scroll-margin-top:24px}
+.stage-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.stage-num{
+  font:500 12px/1 "IBM Plex Mono",monospace;color:var(--copper);
+  letter-spacing:.08em;flex:none;padding-top:4px;
+}
+h2.stage{
+  font-family:Newsreader,Georgia,serif;font-weight:600;
+  font-size:clamp(26px,3.4vw,34px);line-height:1.15;letter-spacing:-.01em;
+  margin:0;text-wrap:balance;
+}
+h3{
+  font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:15px;
+  letter-spacing:.01em;margin:32px 0 10px;
+}
+p{max-width:var(--maxw);margin:0 0 16px}
+.lede{color:var(--ink-2);font-size:17px;max-width:var(--maxw);margin-bottom:24px}
+ul,ol.body{max-width:var(--maxw);padding-left:20px;margin:0 0 18px}
+li{margin-bottom:7px}
+strong{font-weight:600}
+code{
+  font-family:"IBM Plex Mono",monospace;font-size:.87em;
+  background:var(--code-bg);padding:1px 5px;border-radius:3px;
+}
+.file{
+  font:500 11px/1 "IBM Plex Mono",monospace;color:var(--muted);
+  letter-spacing:.04em;margin-bottom:22px;
+}
+.file b{color:var(--teal);font-weight:500}
+
+/* code blocks */
+pre{
+  background:var(--code-bg);border:1px solid var(--rule);
+  border-left:2px solid var(--teal);
+  padding:16px 18px;margin:0 0 20px;overflow-x:auto;
+  font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.6;
+  color:var(--ink-2);
+}
+pre .c{color:var(--muted)}
+pre .k{color:var(--copper)}
+
+/* callout */
+.note{
+  border-left:2px solid var(--copper);background:var(--copper-soft);
+  padding:14px 18px;margin:0 0 22px;max-width:var(--maxw);
+  font-size:14.5px;line-height:1.6;
+}
+.note b{font-weight:600}
+
+/* tables */
+.tw{overflow-x:auto;margin:0 0 24px;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{
+  font:500 10.5px/1 "IBM Plex Mono",monospace;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--muted);background:var(--paper-2);
+}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+td.t{font-family:"IBM Plex Mono",monospace;font-size:13px}
+
+/* figures */
+figure{margin:28px 0 30px}
+.canvas{overflow-x:auto;border:1px solid var(--rule);background:var(--paper-2);padding:20px}
+figure svg{display:block;min-width:560px;max-width:100%;height:auto;margin:0 auto}
+figcaption{
+  font-size:13px;color:var(--muted);margin-top:11px;max-width:var(--maxw);
+  line-height:1.55;
+}
+figcaption b{color:var(--ink-2);font-weight:600}
+
+/* svg text defaults */
+.svg-l{font-family:"IBM Plex Sans",sans-serif;font-size:12px;fill:var(--ink)}
+.svg-m{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--muted)}
+.svg-t{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.09em;fill:var(--muted)}
+
+/* legend chips */
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 6px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;flex:none;border:1px solid var(--rule)}
+
+/* results */
+.gen{
+  border:1px solid var(--rule);background:var(--paper-2);
+  padding:16px 18px;margin:0 0 18px;max-width:var(--maxw);
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.7;
+  white-space:pre-wrap;color:var(--ink-2);
+}
+.gen b{color:var(--teal);font-weight:500}
+
+.two{display:grid;gap:22px;margin:0 0 24px}
+@media(min-width:720px){.two{grid-template-columns:1fr 1fr}}
+.panel{border:1px solid var(--rule);padding:16px 18px;background:var(--paper-2)}
+.panel h4{margin:0 0 9px;font-size:13px;font-weight:600;letter-spacing:.01em}
+.panel ul{margin:0;padding-left:18px;font-size:14px}
+.panel p{font-size:14px;margin:0}
+
+footer{
+  border-top:1px solid var(--rule);padding-top:22px;margin-top:16px;
+  font-size:13px;color:var(--muted);max-width:var(--maxw);
+}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Pipeline stages">
+  <h2>Pipeline</h2>
+  <ol>
+    <li><a href="#s0"><span class="n">00</span><span>What this repo is</span></a></li>
+    <li><a href="#s1"><span class="n">01</span><span>Corpus &amp; tokenization</span></a></li>
+    <li><a href="#s2"><span class="n">02</span><span>Batch sampling</span></a></li>
+    <li><a href="#s3"><span class="n">03</span><span>RMSNorm</span></a></li>
+    <li><a href="#s4"><span class="n">04</span><span>Dual RoPE</span></a></li>
+    <li><a href="#s5"><span class="n">05</span><span>Grouped-query attention</span></a></li>
+    <li><a href="#s6"><span class="n">06</span><span>Attention masks</span></a></li>
+    <li><a href="#s7"><span class="n">07</span><span>Gated feed-forward</span></a></li>
+    <li><a href="#s8"><span class="n">08</span><span>Transformer block</span></a></li>
+    <li><a href="#s9"><span class="n">09</span><span>Full model</span></a></li>
+    <li><a href="#s10"><span class="n">10</span><span>Pre-training loop</span></a></li>
+    <li><a href="#s11"><span class="n">11</span><span>Sampling &amp; generation</span></a></li>
+    <li><a href="#s12"><span class="n">12</span><span>LoRA from scratch</span></a></li>
+    <li><a href="#s13"><span class="n">13</span><span>Alpaca instruction data</span></a></li>
+    <li><a href="#s14"><span class="n">14</span><span>Collation &amp; masking</span></a></li>
+    <li><a href="#s15"><span class="n">15</span><span>Fine-tuning loop</span></a></li>
+    <li><a href="#s16"><span class="n">16</span><span>Results &amp; post-mortem</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">Codebase walkthrough · single-notebook project</p>
+  <h1>Gemma 3 270M, <em>built from the tensor up</em></h1>
+  <p class="standfirst">One Kaggle notebook takes a 270-million-parameter Gemma 3 clone from an empty <code>nn.Module</code> to a pre-trained storyteller, then bolts on a hand-written LoRA adapter and instruction-tunes it. No <code>transformers</code>, no <code>peft</code> — every mask, rotation and low-rank matrix is written out.</p>
+  <dl class="facts">
+    <div><dt>Params</dt><dd>~270 M</dd></div>
+    <div><dt>Layers</dt><dd>18</dd></div>
+    <div><dt>d_model</dt><dd>640</dd></div>
+    <div><dt>Heads / KV</dt><dd>4 / 1</dd></div>
+    <div><dt>Vocab</dt><dd>50 257</dd></div>
+    <div><dt>LoRA rank</dt><dd>8</dd></div>
+  </dl>
+</header>
+
+<!-- ============ 00 ============ -->
+<section id="s0">
+  <div class="stage-head"><span class="stage-num">00</span><h2 class="stage">What this repo actually contains</h2></div>
+  <p class="file">gemma3-270b-from-scratch-lora-finetuning.ipynb · <b>76 cells</b> &nbsp;+&nbsp; README.md</p>
+
+  <p class="lede">The whole project is one notebook. It runs top to bottom as a linear pipeline with two distinct training phases separated by a checkpoint on disk. The rail on the left follows that order exactly — the numbering is the execution order, not a convenience.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 900 300" role="img" aria-label="End-to-end pipeline from TinyStories corpus through pre-training, checkpoint, LoRA injection and instruction fine-tuning to evaluation">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+
+        <!-- phase A band -->
+        <rect x="10" y="40" width="418" height="170" fill="var(--teal-soft)" stroke="var(--rule)"/>
+        <text class="svg-t" x="24" y="60">PHASE A — PRE-TRAINING (ALL WEIGHTS)</text>
+        <!-- phase B band -->
+        <rect x="472" y="40" width="418" height="170" fill="var(--copper-soft)" stroke="var(--rule)"/>
+        <text class="svg-t" x="486" y="60">PHASE B — LORA FINE-TUNE (ADAPTERS ONLY)</text>
+
+        <!-- A boxes -->
+        <g>
+          <rect x="26" y="76" width="118" height="52" fill="var(--paper)" stroke="var(--teal)"/>
+          <text class="svg-l" x="85" y="98" text-anchor="middle">TinyStories</text>
+          <text class="svg-m" x="85" y="114" text-anchor="middle">2.1M stories</text>
+
+          <rect x="168" y="76" width="118" height="52" fill="var(--paper)" stroke="var(--teal)"/>
+          <text class="svg-l" x="227" y="98" text-anchor="middle">GPT-2 BPE</text>
+          <text class="svg-m" x="227" y="114" text-anchor="middle">train.bin uint16</text>
+
+          <rect x="310" y="76" width="102" height="52" fill="var(--paper)" stroke="var(--teal)"/>
+          <text class="svg-l" x="361" y="98" text-anchor="middle">get_batch</text>
+          <text class="svg-m" x="361" y="114" text-anchor="middle">32 × 128</text>
+
+          <rect x="26" y="150" width="386" height="46" fill="var(--paper)" stroke="var(--teal)"/>
+          <text class="svg-l" x="219" y="171" text-anchor="middle">Gemma3Model · 17 000 iters · AdamW + cosine · grad-accum 32</text>
+          <text class="svg-m" x="219" y="187" text-anchor="middle">cross-entropy next-token loss, bfloat16 autocast</text>
+        </g>
+        <path d="M144,102 H166" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+        <path d="M286,102 H308" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+        <path d="M361,128 V150" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+
+        <!-- checkpoint -->
+        <rect x="432" y="130" width="36" height="86" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.5"/>
+        <text class="svg-t" x="450" y="176" text-anchor="middle" transform="rotate(-90 450 176)" fill="var(--ink)">CHECKPOINT</text>
+        <path d="M412,173 H430" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+        <text class="svg-m" x="450" y="232" text-anchor="middle">best_model_params.pt</text>
+        <path d="M468,173 H492 V128" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+
+        <!-- B boxes -->
+        <g>
+          <rect x="486" y="150" width="126" height="46" fill="var(--paper)" stroke="var(--copper)"/>
+          <text class="svg-l" x="549" y="171" text-anchor="middle">freeze all</text>
+          <text class="svg-m" x="549" y="187" text-anchor="middle">requires_grad=False</text>
+
+          <rect x="486" y="76" width="126" height="52" fill="var(--paper)" stroke="var(--copper)"/>
+          <text class="svg-l" x="549" y="98" text-anchor="middle">inject LoRA</text>
+          <text class="svg-m" x="549" y="114" text-anchor="middle">7 × 18 = 126 wraps</text>
+
+          <rect x="636" y="76" width="120" height="52" fill="var(--paper)" stroke="var(--copper)"/>
+          <text class="svg-l" x="696" y="98" text-anchor="middle">Alpaca data</text>
+          <text class="svg-m" x="696" y="114" text-anchor="middle">1 100 entries</text>
+
+          <rect x="780" y="76" width="96" height="52" fill="var(--paper)" stroke="var(--copper)"/>
+          <text class="svg-l" x="828" y="98" text-anchor="middle">collate</text>
+          <text class="svg-m" x="828" y="114" text-anchor="middle">pad → −100</text>
+
+          <rect x="636" y="150" width="240" height="46" fill="var(--paper)" stroke="var(--copper)"/>
+          <text class="svg-l" x="756" y="171" text-anchor="middle">10 epochs · AdamW lr 5e-5 · A,B only</text>
+          <text class="svg-m" x="756" y="187" text-anchor="middle">train_model_simple → sampled responses</text>
+        </g>
+        <path d="M612,173 H634" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+        <path d="M756,76 V60 M828,128 V142 H760 V150" stroke="var(--muted)" fill="none"/>
+        <path d="M756,128 V150" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+
+        <text class="svg-m" x="450" y="266" text-anchor="middle">the checkpoint is the seam: everything left of it trains 270M params, everything right trains ~1M</text>
+      </svg>
+    </div>
+    <figcaption><b>The two-phase pipeline.</b> Weights cross from Phase A to Phase B only through <code>best_model_params.pt</code>. Phase B re-instantiates the identical architecture, loads that state dict, then mutates the module tree in place before optimizing.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 01 ============ -->
+<section id="s1">
+  <div class="stage-head"><span class="stage-num">01</span><h2 class="stage">Corpus and tokenization</h2></div>
+  <p class="file">cells <b>2–6</b></p>
+
+  <p>The pre-training corpus is <a href="https://huggingface.co/datasets/roneneldan/TinyStories">TinyStories</a> — synthetic children's stories written with a deliberately tiny vocabulary. The tokenizer is not trained; it borrows GPT-2's off-the-shelf BPE via <code>tiktoken</code>, which fixes <code>vocab_size = 50257</code> throughout the model.</p>
+
+  <p>Tokenization follows nanoGPT's <code>prepare.py</code>: map each story to token ids with <code>encode_ordinary</code> (special tokens ignored), then stream every split into a flat <code>np.memmap</code>.</p>
+
+<pre><span class="c"># cell 6 — one contiguous token stream per split</span>
+arr = np.memmap(f'{split}.bin', dtype=np.uint16, mode='w+', shape=(arr_len,))
+for batch_idx in range(1024):                    <span class="c"># shard writes to bound RAM</span>
+    batch = dset.shard(num_shards=1024, index=batch_idx, contiguous=True)
+    arr[idx : idx+len(arr_batch)] = np.concatenate(batch['ids'])
+arr.flush()</pre>
+
+  <div class="note"><b>Why uint16 is safe here.</b> The largest GPT-2 token id is 50256, which fits in 16 bits. That halves the file versus <code>int32</code> and, because the array is memory-mapped, the OS pages in only the slices a batch actually touches — training never loads the corpus into RAM.</div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section id="s2">
+  <div class="stage-head"><span class="stage-num">02</span><h2 class="stage">Batch sampling: no epochs, just random windows</h2></div>
+  <p class="file">cell <b>8</b> · <code>get_batch(split)</code></p>
+
+  <p>There is no <code>DataLoader</code> in Phase A. Each step draws <code>batch_size</code> random offsets into the token stream and slices two windows: inputs <code>x = data[i : i+block_size]</code> and targets <code>y = data[i+1 : i+1+block_size]</code>. The one-position shift <em>is</em> the next-token objective — no separate label construction exists.</p>
+
+<pre>ix = torch.randint(len(data) - block_size, (batch_size,))
+x = torch.stack([torch.from_numpy(data[i   : i+block_size  ].astype(np.int64)) for i in ix])
+y = torch.stack([torch.from_numpy(data[i+1 : i+1+block_size].astype(np.int64)) for i in ix])
+x, y = x.pin_memory().to(device, non_blocking=True), ...   <span class="c"># overlap H2D copy</span></pre>
+
+  <p>The <code>memmap</code> is re-opened every call. That looks wasteful but is deliberate: a long-lived memmap accumulates resident pages and leaks memory over a 17 000-step run.</p>
+</section>
+
+<!-- ============ 03 ============ -->
+<section id="s3">
+  <div class="stage-head"><span class="stage-num">03</span><h2 class="stage">RMSNorm, with Gemma's zero-centred weight</h2></div>
+  <p class="file">cell <b>13</b> · <code>class RMSNorm</code></p>
+
+  <p>Gemma normalizes by root-mean-square only — no mean subtraction, no bias by default. Two details make this implementation match HuggingFace's Gemma 3 rather than a generic RMSNorm:</p>
+
+  <ul>
+    <li>The learned scale is initialized to <strong>zeros</strong> and applied as <code>(1.0 + scale)</code>. A fresh layer is therefore the identity, and weight decay pulls toward <em>identity</em>, not toward zero output.</li>
+    <li>The reduction is forced to <strong>float32</strong> regardless of the bf16 activation dtype, then cast back. Squaring bf16 activations loses precision fast; this keeps the variance estimate stable.</li>
+  </ul>
+
+<pre>x_f    = x.float()
+var    = x_f.pow(2).mean(dim=-1, keepdim=True)   <span class="c"># no mean subtraction</span>
+x_norm = x_f * torch.rsqrt(var + self.eps)
+out    = x_norm * (1.0 + self.scale.float())     <span class="c"># zero-centred weight</span>
+return out.to(input_dtype)</pre>
+</section>
+
+<!-- ============ 04 ============ -->
+<section id="s4">
+  <div class="stage-head"><span class="stage-num">04</span><h2 class="stage">Two rotary bases, precomputed once</h2></div>
+  <p class="file">cell <b>12</b> · <code>compute_rope_params</code>, <code>apply_rope</code></p>
+
+  <p>Position is injected by rotating query and key vectors, not by adding an embedding. Gemma 3 runs <strong>two</strong> RoPE frequency schedules and picks per layer:</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Schedule</th><th>theta base</th><th>Used by</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td class="t">rope_local</td><td class="num">10 000</td><td>sliding layers</td><td>fast-rotating, fine local phase resolution</td></tr>
+      <tr><td class="t">rope_global</td><td class="num">1 000 000</td><td>full-attention layers</td><td>slow-rotating, stays unambiguous over 32k positions</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Both <code>cos</code>/<code>sin</code> tables are built for the full <code>context_length</code> at construction and stashed as non-persistent buffers — they are derived constants, so they move with <code>.to(device)</code> but never enter the checkpoint.</p>
+
+<pre>inv_freq = 1.0 / (theta_base ** (torch.arange(0, head_dim, 2)/head_dim))
+angles   = positions[:, None] * inv_freq[None, :]
+angles   = torch.cat([angles, angles], dim=1)      <span class="c"># duplicate to full head_dim</span>
+
+<span class="c"># apply: rotate the two halves against each other</span>
+x1, x2   = x[..., :head_dim//2], x[..., head_dim//2:]
+rotated  = torch.cat((-x2, x1), dim=-1)
+x_rot    = (x * cos) + (rotated * sin)</pre>
+
+  <div class="note"><b>Half-split, not pair-interleaved.</b> This is the "rotate-half" convention: dimension <code>i</code> pairs with <code>i + head_dim/2</code>. It is mathematically equivalent to the interleaved form but only if the projection weights were trained under the same convention — one reason weights from this notebook are not drop-in compatible with a differently-conventioned checkpoint.</div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section id="s5">
+  <div class="stage-head"><span class="stage-num">05</span><h2 class="stage">Grouped-query attention: 4 queries, 1 shared KV</h2></div>
+  <p class="file">cell <b>13</b> · <code>class GroupedQueryAttention</code></p>
+
+  <p>With <code>n_heads = 4</code> and <code>n_kv_groups = 1</code>, this configuration is really <em>multi-query</em> attention: all four query heads read a single key/value head. The KV projections are consequently 4× narrower than the query projection, which is what shrinks the KV cache at inference.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 860 330" role="img" aria-label="Grouped query attention data flow: one 640-dim token projects to four 256-dim query heads and a single shared key and value head, which is repeat-interleaved four times before scaled dot-product attention">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+
+        <rect x="18" y="132" width="96" height="54" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="66" y="154" text-anchor="middle">x</text>
+        <text class="svg-m" x="66" y="171" text-anchor="middle">b,T,640</text>
+
+        <!-- projections -->
+        <rect x="150" y="34" width="94" height="40" fill="var(--copper-soft)" stroke="var(--copper)"/>
+        <text class="svg-l" x="197" y="52" text-anchor="middle">W_query</text>
+        <text class="svg-m" x="197" y="66" text-anchor="middle">640→1024</text>
+
+        <rect x="150" y="140" width="94" height="38" fill="var(--teal-soft)" stroke="var(--teal)"/>
+        <text class="svg-l" x="197" y="157" text-anchor="middle">W_key</text>
+        <text class="svg-m" x="197" y="171" text-anchor="middle">640→256</text>
+
+        <rect x="150" y="200" width="94" height="38" fill="var(--teal-soft)" stroke="var(--teal)"/>
+        <text class="svg-l" x="197" y="217" text-anchor="middle">W_value</text>
+        <text class="svg-m" x="197" y="231" text-anchor="middle">640→256</text>
+
+        <path d="M114,150 L146,56"  stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+        <path d="M114,159 H146"     stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+        <path d="M114,168 L146,214" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+
+        <!-- q heads -->
+        <text class="svg-t" x="286" y="26">4 QUERY HEADS · head_dim 256</text>
+        <g>
+          <rect x="286" y="34" width="42" height="26" fill="var(--paper)" stroke="var(--copper)"/><text class="svg-m" x="307" y="51" text-anchor="middle" fill="var(--copper)">q0</text>
+          <rect x="334" y="34" width="42" height="26" fill="var(--paper)" stroke="var(--copper)"/><text class="svg-m" x="355" y="51" text-anchor="middle" fill="var(--copper)">q1</text>
+          <rect x="382" y="34" width="42" height="26" fill="var(--paper)" stroke="var(--copper)"/><text class="svg-m" x="403" y="51" text-anchor="middle" fill="var(--copper)">q2</text>
+          <rect x="430" y="34" width="42" height="26" fill="var(--paper)" stroke="var(--copper)"/><text class="svg-m" x="451" y="51" text-anchor="middle" fill="var(--copper)">q3</text>
+        </g>
+        <path d="M244,50 H282" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+
+        <!-- k single -->
+        <rect x="286" y="146" width="42" height="26" fill="var(--paper)" stroke="var(--teal)"/><text class="svg-m" x="307" y="163" text-anchor="middle" fill="var(--teal)">k0</text>
+        <rect x="286" y="206" width="42" height="26" fill="var(--paper)" stroke="var(--teal)"/><text class="svg-m" x="307" y="223" text-anchor="middle" fill="var(--teal)">v0</text>
+        <path d="M244,159 H282" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+        <path d="M244,219 H282" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+
+        <!-- qk norm + rope -->
+        <text class="svg-t" x="286" y="86">↓ q_norm (RMSNorm over head_dim) → RoPE → × scaling 1/√256</text>
+        <text class="svg-t" x="286" y="126">↑ k_norm → RoPE → repeat_interleave(group_size=4)</text>
+
+        <!-- broadcast -->
+        <g>
+          <rect x="334" y="146" width="42" height="26" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="3 2"/><text class="svg-m" x="355" y="163" text-anchor="middle" fill="var(--teal)">k0</text>
+          <rect x="382" y="146" width="42" height="26" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="3 2"/><text class="svg-m" x="403" y="163" text-anchor="middle" fill="var(--teal)">k0</text>
+          <rect x="430" y="146" width="42" height="26" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="3 2"/><text class="svg-m" x="451" y="163" text-anchor="middle" fill="var(--teal)">k0</text>
+          <rect x="334" y="206" width="42" height="26" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="3 2"/><text class="svg-m" x="355" y="223" text-anchor="middle" fill="var(--teal)">v0</text>
+          <rect x="382" y="206" width="42" height="26" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="3 2"/><text class="svg-m" x="403" y="223" text-anchor="middle" fill="var(--teal)">v0</text>
+          <rect x="430" y="206" width="42" height="26" fill="var(--teal-soft)" stroke="var(--teal)" stroke-dasharray="3 2"/><text class="svg-m" x="451" y="223" text-anchor="middle" fill="var(--teal)">v0</text>
+        </g>
+        <text class="svg-m" x="490" y="163">← same tensor, broadcast (dashed = no new params)</text>
+
+        <!-- attention -->
+        <rect x="560" y="34" width="140" height="86" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="630" y="60" text-anchor="middle">q @ kᵀ</text>
+        <text class="svg-m" x="630" y="78" text-anchor="middle">masked_fill(mask, −inf)</text>
+        <text class="svg-m" x="630" y="94" text-anchor="middle">softmax(dim=−1)</text>
+        <text class="svg-m" x="630" y="110" text-anchor="middle">attn @ v</text>
+        <path d="M476,50 H556" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+        <path d="M476,159 L554,110" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+
+        <rect x="736" y="52" width="104" height="50" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="788" y="72" text-anchor="middle">out_proj</text>
+        <text class="svg-m" x="788" y="89" text-anchor="middle">1024→640</text>
+        <path d="M700,77 H732" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+
+        <text class="svg-m" x="560" y="272">mask comes in from the block — it is what makes a layer local or global</text>
+        <path d="M556,264 L520,264" stroke="var(--muted)" fill="none" marker-end="url(#ar2)"/>
+        <path d="M630,256 V130" stroke="var(--muted)" stroke-dasharray="3 3" fill="none" marker-end="url(#ar2)"/>
+        <text class="svg-m" x="18" y="296">note: d_out = n_heads × head_dim = 4 × 256 = 1024 &gt; emb_dim 640 — heads are deliberately wider than the residual stream</text>
+      </svg>
+    </div>
+    <figcaption><b>One attention call.</b> <code>repeat_interleave</code> is a view-expansion, not a projection — it adds zero parameters and is what distinguishes GQA from plain MHA. Note also that <code>head_dim</code> is set explicitly to 256, so <code>d_out</code> (1024) exceeds <code>emb_dim</code> (640); <code>out_proj</code> contracts back to the residual width.</figcaption>
+  </figure>
+
+  <h3>QK-norm and the pre-attention scalar</h3>
+  <p>Two stabilizers that plain attention omits. <code>qk_norm=True</code> applies an RMSNorm across <code>head_dim</code> to queries and keys before RoPE, bounding the dot-product magnitude. And the scale factor is <code>query_pre_attn_scalar ** -0.5 = 1/16</code>, taken from config rather than derived from <code>head_dim</code> — for this config the two coincide (both 256), but the seam exists so the scale can be pinned independently.</p>
+</section>
+
+<!-- ============ 06 ============ -->
+<section id="s6">
+  <div class="stage-head"><span class="stage-num">06</span><h2 class="stage">Two masks, built fresh each forward</h2></div>
+  <p class="file">cell <b>13</b> · <code>Gemma3Model._create_masks</code></p>
+
+  <p>Gemma 3 interleaves cheap local attention with occasional global attention. In this 18-layer config, layers <strong>5, 11 and 17</strong> are <code>full_attention</code>; the other fifteen are <code>sliding_attention</code> with a 512-token window — a 5:1 ratio.</p>
+
+  <div class="legend">
+    <span><i class="sw" style="background:var(--paper)"></i>attend (mask = False)</span>
+    <span><i class="sw" style="background:var(--copper)"></i>masked as future</span>
+    <span><i class="sw" style="background:var(--teal)"></i>masked as too-far-past</span>
+  </div>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 660 300" role="img" aria-label="Two 8 by 8 mask matrices: the global causal mask blocks only future positions, the local mask additionally blocks positions further back than the sliding window">
+        <g id="grids"></g>
+        <text class="svg-l" x="24" y="24">mask_global = triu(ones, diagonal=1)</text>
+        <text class="svg-m" x="24" y="42">causal only — every past token visible</text>
+        <text class="svg-l" x="368" y="24">mask_local = mask_global | far_past</text>
+        <text class="svg-m" x="368" y="42">far_past = triu(ones, diagonal=W).T</text>
+
+        <!-- grid A -->
+        <g transform="translate(24,58)">
+          <g id="gA"></g>
+          <text class="svg-m" x="-8" y="106" text-anchor="end" transform="rotate(-90 -8 106)">query i</text>
+          <text class="svg-m" x="104" y="216" text-anchor="middle">key j</text>
+        </g>
+        <!-- grid B -->
+        <g transform="translate(368,58)">
+          <g id="gB"></g>
+          <text class="svg-m" x="104" y="216" text-anchor="middle">key j</text>
+        </g>
+        <text class="svg-m" x="24" y="284">shown at seq_len 8, window 4; the real model uses window 512 and rebuilds both masks on every forward pass</text>
+      </svg>
+    </div>
+    <figcaption><b>The masks, drawn.</b> Sliding attention is the causal mask <em>plus</em> a lower-triangular far-past mask, so row <code>i</code> attends to the half-open window <code>(i−W, i]</code>. Building an <code>seq_len²</code> boolean pair each forward is fine at <code>block_size = 128</code> and is the main reason the 32 768-token context is nominal rather than practical here.</figcaption>
+  </figure>
+
+<pre>ones        = torch.ones((seq_len, seq_len), dtype=torch.bool)
+mask_global = torch.triu(ones, diagonal=1)                      <span class="c"># j &gt; i</span>
+far_past    = torch.triu(ones, diagonal=self.cfg["sliding_window"]).T   <span class="c"># i − j ≥ W</span>
+mask_local  = mask_global | far_past</pre>
+</section>
+
+<!-- ============ 07 ============ -->
+<section id="s7">
+  <div class="stage-head"><span class="stage-num">07</span><h2 class="stage">The gated feed-forward (GeGLU)</h2></div>
+  <p class="file">cell <b>13</b> · <code>class FeedForward</code></p>
+
+  <p>Three bias-free linears, not two. <code>fc1</code> and <code>fc2</code> both expand 640 → 2048 from the same input; one is passed through tanh-approximated GELU and used as a <em>gate</em> multiplying the other; <code>fc3</code> contracts 2048 → 640.</p>
+
+<pre>x_fc1 = self.fc1(x)                                   <span class="c"># gate branch</span>
+x_fc2 = self.fc2(x)                                   <span class="c"># value branch</span>
+x     = nn.functional.gelu(x_fc1, approximate="tanh") * x_fc2
+return self.fc3(x)</pre>
+
+  <div class="note">The notebook's inline comment calls this "combining both by concat" — the code in fact multiplies element-wise. Multiplication is correct for GeGLU; concatenation would require <code>fc3</code> to take 4096 inputs, and it takes 2048.</div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section id="s8">
+  <div class="stage-head"><span class="stage-num">08</span><h2 class="stage">The transformer block: four norms per layer</h2></div>
+  <p class="file">cell <b>13</b> · <code>class TransformerBlock</code></p>
+
+  <p>Most decoder blocks carry two norms. Gemma 3 carries four — each sublayer is wrapped by a norm on the way <em>in</em> and another on the way <em>out</em>, before the residual add. The post-norms keep the residual stream from drifting in magnitude across 18 layers.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 700 380" role="img" aria-label="Transformer block: input layernorm, grouped query attention, post attention layernorm, residual add, then pre feedforward layernorm, gated feedforward, post feedforward layernorm, residual add">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+
+        <!-- residual spine -->
+        <line x1="118" y1="30" x2="118" y2="352" stroke="var(--rule)" stroke-width="10"/>
+        <text class="svg-t" x="34" y="196" transform="rotate(-90 34 196)">RESIDUAL STREAM · 640</text>
+
+        <text class="svg-m" x="104" y="26" text-anchor="end">x in</text>
+
+        <!-- attn branch -->
+        <path d="M118,66 H206" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+        <rect x="210" y="48" width="150" height="34" fill="var(--paper-2)" stroke="var(--rule)"/>
+        <text class="svg-l" x="285" y="70" text-anchor="middle">input_layernorm</text>
+
+        <rect x="380" y="42" width="176" height="46" fill="var(--copper-soft)" stroke="var(--copper)"/>
+        <text class="svg-l" x="468" y="62" text-anchor="middle">GroupedQueryAttention</text>
+        <text class="svg-m" x="468" y="79" text-anchor="middle">mask + RoPE chosen by attn_type</text>
+        <path d="M360,65 H376" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+
+        <rect x="380" y="106" width="176" height="34" fill="var(--paper-2)" stroke="var(--rule)"/>
+        <text class="svg-l" x="468" y="128" text-anchor="middle">post_attention_layernorm</text>
+        <path d="M468,88 V102" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+
+        <path d="M380,123 H130" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+        <circle cx="118" cy="123" r="11" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="118" y="128" text-anchor="middle">+</text>
+
+        <!-- ff branch -->
+        <path d="M118,214 H206" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+        <rect x="210" y="196" width="150" height="34" fill="var(--paper-2)" stroke="var(--rule)"/>
+        <text class="svg-l" x="285" y="218" text-anchor="middle">pre_feedforward_ln</text>
+
+        <rect x="380" y="184" width="176" height="58" fill="var(--teal-soft)" stroke="var(--teal)"/>
+        <text class="svg-l" x="468" y="205" text-anchor="middle">FeedForward (GeGLU)</text>
+        <text class="svg-m" x="468" y="222" text-anchor="middle">640 → 2048 ⊙ 2048 → 640</text>
+        <path d="M360,213 H376" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+
+        <rect x="380" y="260" width="176" height="34" fill="var(--paper-2)" stroke="var(--rule)"/>
+        <text class="svg-l" x="468" y="282" text-anchor="middle">post_feedforward_ln</text>
+        <path d="M468,242 V256" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+
+        <path d="M380,277 H130" stroke="var(--muted)" fill="none" marker-end="url(#ar3)"/>
+        <circle cx="118" cy="277" r="11" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="118" y="282" text-anchor="middle">+</text>
+
+        <text class="svg-m" x="104" y="348" text-anchor="end">x out</text>
+
+        <!-- layer type key -->
+        <rect x="586" y="42" width="104" height="106" fill="var(--paper)" stroke="var(--rule)"/>
+        <text class="svg-t" x="598" y="62">ATTN_TYPE</text>
+        <text class="svg-m" x="598" y="82" fill="var(--teal)">sliding ×15</text>
+        <text class="svg-m" x="598" y="98">mask_local</text>
+        <text class="svg-m" x="598" y="112">rope 10 000</text>
+        <text class="svg-m" x="598" y="132" fill="var(--copper)">full ×3</text>
+        <text class="svg-m" x="598" y="146">rope 1 000 000</text>
+      </svg>
+    </div>
+    <figcaption><b>Sandwich normalization.</b> The four RMSNorms — <code>input</code>, <code>post_attention</code>, <code>pre_feedforward</code>, <code>post_feedforward</code> — are the structural signature of a Gemma block. <code>attn_type</code> is fixed per block at construction and selects which mask and which RoPE table the attention receives.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 09 ============ -->
+<section id="s9">
+  <div class="stage-head"><span class="stage-num">09</span><h2 class="stage">Assembling Gemma3Model</h2></div>
+  <p class="file">cells <b>13, 15</b> · <code>class Gemma3Model</code>, <code>GEMMA3_CONFIG_270M</code></p>
+
+  <p>The top-level module is thin: an embedding table, 18 blocks built directly from the <code>layer_types</code> list, a final norm, and an untied output head. The forward pass carries both mask pairs and both RoPE pairs down to every block, letting each block pick.</p>
+
+<pre>x = self.tok_emb(input_ids) * (self.cfg["emb_dim"] ** 0.5)   <span class="c"># √640 ≈ 25.3 scale-up</span>
+mask_global, mask_local = self._create_masks(seq_len, x.device)
+for block in self.blocks:
+    x = block(x, mask_global=..., mask_local=..., cos_global=..., cos_local=...)
+x      = self.final_norm(x)
+logits = self.out_head(x.to(self.cfg["dtype"]))
+loss   = F.cross_entropy(logits.reshape(-1, V), targets.reshape(-1)) if targets is not None else None
+return logits, loss</pre>
+
+  <div class="note"><b>The embedding scale-up matters.</b> Multiplying by <code>√emb_dim</code> is a Gemma-specific step. Embeddings are initialized small; without this the first RMSNorm would amplify near-noise, and dropping it changes early training dynamics noticeably.</div>
+
+  <h3>Configuration, annotated</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Key</th><th>Value</th><th>Consequence</th></tr></thead>
+    <tbody>
+      <tr><td class="t">vocab_size</td><td class="num">50 257</td><td>fixed by GPT-2 BPE; head is 640 × 50257 ≈ 32M params</td></tr>
+      <tr><td class="t">context_length</td><td class="num">32 768</td><td>sizes the RoPE tables only — training uses 128</td></tr>
+      <tr><td class="t">emb_dim</td><td class="num">640</td><td>residual-stream width</td></tr>
+      <tr><td class="t">n_layers</td><td class="num">18</td><td>must equal <code>len(layer_types)</code>; asserted</td></tr>
+      <tr><td class="t">n_heads / n_kv_groups</td><td class="num">4 / 1</td><td>group_size 4 → multi-query attention</td></tr>
+      <tr><td class="t">head_dim</td><td class="num">256</td><td>independent of emb_dim; d_out = 1024</td></tr>
+      <tr><td class="t">hidden_dim</td><td class="num">2048</td><td>3.2× expansion in the GeGLU</td></tr>
+      <tr><td class="t">sliding_window</td><td class="num">512</td><td>&gt; block_size 128, so local ≡ global during this training run</td></tr>
+      <tr><td class="t">qk_norm</td><td class="num">True</td><td>RMSNorm on q and k per head</td></tr>
+      <tr><td class="t">dtype</td><td class="num">bfloat16</td><td>parameters stored in bf16, norms compute in fp32</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><b>A consequence worth naming.</b> With <code>sliding_window = 512</code> and <code>block_size = 128</code>, no query is ever more than 127 positions from any key — <code>far_past</code> is all-zeros and the local mask equals the global one. The sliding-window machinery is correct and exercised, but during this pre-training run the fifteen "local" layers behave identically to full-attention layers. The two RoPE bases still differ, so the layers are not equivalent.</div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <div class="stage-head"><span class="stage-num">10</span><h2 class="stage">Pre-training loop</h2></div>
+  <p class="file">cells <b>17, 19, 20, 22</b></p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Hyper-parameter</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>iterations</td><td class="num">17 000</td></tr>
+      <tr><td>batch × block</td><td class="num">32 × 128</td></tr>
+      <tr><td>grad accumulation</td><td class="num">32 → effective batch 1024 seqs</td></tr>
+      <tr><td>optimizer</td><td class="num">AdamW, β (0.9, 0.95), wd 0.1, eps 1e-9</td></tr>
+      <tr><td>lr schedule</td><td class="num">LinearLR warmup 1000 → CosineAnnealingLR</td></tr>
+      <tr><td>grad clipping</td><td class="num">max_norm 0.5</td></tr>
+      <tr><td>eval / checkpoint</td><td class="num">every 500 iters, on best val loss</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><code>SequentialLR</code> stitches warmup and cosine decay at the <code>warmup_steps</code> milestone, and — importantly — <code>scheduler.step()</code> is called only inside the accumulation branch, so the schedule advances once per <em>optimizer</em> step rather than once per micro-batch.</p>
+
+<pre>with ctx:                                    <span class="c"># autocast bf16</span>
+    logits, loss = model(X, y)
+    loss = loss / gradient_accumulation_steps
+scaler.scale(loss).backward()
+
+if ((epoch+1) % gradient_accumulation_steps == 0) or (epoch+1 == max_iters):
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.5)
+    scaler.step(optimizer); scaler.update()
+    optimizer.zero_grad(set_to_none=True)
+    scheduler.step()                         <span class="c"># once per real update</span></pre>
+
+  <div class="note"><b>Two config quirks in this cell.</b> <code>min_lr = 5e-4</code> is <em>larger</em> than <code>learning_rate = 1e-4</code>, so <code>CosineAnnealingLR</code>'s <code>eta_min</code> floor sits above the peak and the cosine leg anneals upward rather than down. And <code>GradScaler</code> is constructed with <code>enabled=(dtype == 'float16')</code> — on a bf16 GPU it is a no-op passthrough, which is correct, since bf16 does not need loss scaling.</div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <div class="stage-head"><span class="stage-num">11</span><h2 class="stage">Three decoders for three purposes</h2></div>
+  <p class="file">cells <b>13, 64, 67</b></p>
+
+  <p>The notebook accumulates three generation functions with different sampling behaviour. Knowing which produced a given sample explains a lot about the outputs in the README.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Function</th><th>Defined</th><th>Strategy</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td class="t">Gemma3Model.generate</td><td class="num">cell 13</td><td>multinomial, temp 1.0, optional top-k</td><td>post-pretraining story samples</td></tr>
+      <tr><td class="t">generate_text_simple</td><td class="num">cell 64</td><td>pure argmax (greedy)</td><td>per-epoch progress prints</td></tr>
+      <tr><td class="t">generate</td><td class="num">cell 67</td><td>top-k + temperature, temp 0 → greedy, eos stop</td><td>final instruction evaluation</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>All three re-crop the context to the last <code>context_size</code> tokens and take <code>logits[:, -1, :]</code>. None implement a KV cache — every new token re-runs the full forward pass over the whole prefix, which is quadratic and why 256-token generations are slow. The two later functions also handle the model returning a <code>(logits, loss)</code> tuple.</p>
+
+  <div class="note">The final evaluation calls <code>generate(...)</code> with default <code>temperature=0.0</code> and no <code>top_k</code> — so the instruction-following samples in the README are <b>greedy</b> decodes. Greedy decoding from a weak model is exactly what produces the locked-in repetition loops seen there.</div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <div class="stage-head"><span class="stage-num">12</span><h2 class="stage">LoRA, written by hand</h2></div>
+  <p class="file">cells <b>35, 36, 41, 42</b> · <code>LoRALinear</code>, <code>add_lora_to_gemma3</code></p>
+
+  <p>No <code>peft</code>. <code>LoRALinear</code> wraps a frozen <code>nn.Linear</code> and adds a rank-<em>r</em> detour: <code>base(x) + (x @ A @ B) * (alpha/r)</code>. The injector then walks every block and swaps seven projections in place.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 780 300" role="img" aria-label="LoRA wrapper: input splits into a frozen linear path and a low rank A then B path, whose scaled output is added back">
+        <defs>
+          <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+
+        <rect x="20" y="112" width="72" height="44" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="56" y="139" text-anchor="middle">x</text>
+
+        <!-- frozen path -->
+        <rect x="164" y="46" width="212" height="48" fill="var(--paper-2)" stroke="var(--rule)"/>
+        <text class="svg-l" x="270" y="68" text-anchor="middle">self.linear — FROZEN</text>
+        <text class="svg-m" x="270" y="85" text-anchor="middle">requires_grad = False · bf16 · e.g. 640×1024</text>
+        <path d="M92,126 L160,74" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+
+        <!-- lora path -->
+        <rect x="164" y="168" width="92" height="48" fill="var(--copper-soft)" stroke="var(--copper)"/>
+        <text class="svg-l" x="210" y="190" text-anchor="middle">A</text>
+        <text class="svg-m" x="210" y="206" text-anchor="middle">in × 8 · kaiming</text>
+
+        <rect x="284" y="168" width="92" height="48" fill="var(--copper-soft)" stroke="var(--copper)"/>
+        <text class="svg-l" x="330" y="190" text-anchor="middle">B</text>
+        <text class="svg-m" x="330" y="206" text-anchor="middle">8 × out · zeros</text>
+
+        <path d="M92,144 L160,190" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+        <path d="M256,192 H280" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+
+        <rect x="404" y="168" width="112" height="48" fill="var(--paper)" stroke="var(--copper)"/>
+        <text class="svg-l" x="460" y="190" text-anchor="middle">× α/r = 2.0</text>
+        <text class="svg-m" x="460" y="206" text-anchor="middle">alpha 16, rank 8</text>
+        <path d="M376,192 H400" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+
+        <circle cx="576" cy="131" r="14" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="576" y="136" text-anchor="middle">+</text>
+        <path d="M376,70 L560,122" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+        <path d="M516,192 L562,142" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+
+        <rect x="632" y="108" width="126" height="48" fill="var(--paper)" stroke="var(--ink)"/>
+        <text class="svg-l" x="695" y="130" text-anchor="middle">output</text>
+        <text class="svg-m" x="695" y="147" text-anchor="middle">same shape as base</text>
+        <path d="M590,131 H628" stroke="var(--muted)" fill="none" marker-end="url(#ar4)"/>
+
+        <text class="svg-t" x="164" y="252">B = 0 AT INIT → DELTA = 0 → THE WRAPPED MODEL IS EXACTLY THE PRE-TRAINED MODEL ON STEP 0</text>
+        <text class="svg-m" x="164" y="274">A random breaks symmetry so gradients reach B; A zero as well would leave the path permanently dead</text>
+      </svg>
+    </div>
+    <figcaption><b>The initialization argument</b>, which the notebook spells out in cell 33: A random / B zero is the only pairing that starts as a no-op <em>and</em> can still learn. Both zero → no gradient flow, ever. Both random → the adapter injects noise into a converged model from step one.</figcaption>
+  </figure>
+
+  <h3>Where the adapters land</h3>
+  <p><code>add_lora_to_gemma3</code> freezes every parameter, then wraps seven linears per block: <code>W_query</code>, <code>W_key</code>, <code>W_value</code>, <code>out_proj</code>, <code>fc1</code>, <code>fc2</code>, <code>fc3</code>. Across 18 blocks that is <strong>126 wrapped projections</strong> and 252 new tensors. Embeddings, the output head, and all 72 RMSNorms are left frozen and untouched.</p>
+
+<pre>for block in model.blocks:
+    attn, ff = block.att, block.ff
+    attn.W_query = LoRALinear(attn.W_query, rank, alpha)   <span class="c"># … k, v, out_proj</span>
+    ff.fc1 = LoRALinear(ff.fc1, rank, alpha)               <span class="c"># … fc2, fc3</span>
+
+optimizer = torch.optim.AdamW(
+    filter(lambda p: p.requires_grad, model.parameters()), lr=1e-4)</pre>
+
+  <p>The <code>filter</code> on the optimizer is the second half of the guarantee: freezing stops gradient accumulation, and filtering stops AdamW from allocating momentum state for 270M frozen tensors.</p>
+
+  <div class="note"><b>Wrapping preserves attribute paths.</b> Because <code>LoRALinear</code> keeps the original module at <code>.linear</code>, the pre-trained weights stay in the state dict under a deeper key (<code>…W_query.linear.weight</code>). The swap must therefore happen <em>after</em> <code>load_state_dict</code> — which is exactly the order in cells 34 → 41. Reversing it raises unexpected-key errors.</div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <div class="stage-head"><span class="stage-num">13</span><h2 class="stage">Alpaca-style instruction data</h2></div>
+  <p class="file">cells <b>44–51</b></p>
+
+  <p>1 100 instruction/input/output entries are fetched from the <em>LLMs-from-scratch</em> repo and rendered into the Alpaca prompt template. The <code>### Input:</code> block is emitted only when the entry has one.</p>
+
+<pre>def format_input(entry):
+    instruction_text = ("Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request."
+        f"\n\n### Instruction:\n{entry['instruction']}")
+    input_text = f"\n\n### Input:\n{entry['input']}" if entry["input"] else ""
+    return instruction_text + input_text
+
+<span class="c"># the response is appended only inside the Dataset, never in format_input</span>
+full_text = format_input(entry) + f"\n\n### Response:\n{entry['output']}"</pre>
+
+  <p>Split is a plain positional slice, no shuffle: <strong>85 %</strong> train, <strong>10 %</strong> test, <strong>5 %</strong> validation. <code>InstructionDataset</code> pre-tokenizes every full text in <code>__init__</code>, so the DataLoader hands the collate function raw Python id lists rather than tensors.</p>
+
+  <div class="note">SSL verification is explicitly disabled in <code>download_and_load_file</code> (<code>check_hostname=False</code>, <code>CERT_NONE</code>) — a Kaggle-environment workaround. It is worth removing before running this anywhere else.</div>
+</section>
+
+<!-- ============ 14 ============ -->
+<section id="s14">
+  <div class="stage-head"><span class="stage-num">14</span><h2 class="stage">The collate function does the real work</h2></div>
+  <p class="file">cell <b>55</b> · <code>custom_collate_fn</code></p>
+
+  <p>Padding, shifting and loss-masking all happen here, per batch. Three things occur in sequence for every item:</p>
+
+  <ol class="body">
+    <li>Append one <code>&lt;|endoftext|&gt;</code> (id 50256), then right-pad to the batch's longest sequence <em>plus one</em>.</li>
+    <li>Slice the shift: <code>inputs = padded[:-1]</code>, <code>targets = padded[1:]</code>.</li>
+    <li>Find every pad id in <code>targets</code> and replace <strong>all but the first</strong> with <code>−100</code>.</li>
+  </ol>
+
+<pre>mask    = targets == pad_token_id
+indices = torch.nonzero(mask).squeeze()
+if indices.numel() &gt; 1:
+    targets[indices[1:]] = ignore_index      <span class="c"># −100</span>
+if allowed_max_length is not None:
+    inputs, targets = inputs[:allowed_max_length], targets[:allowed_max_length]</pre>
+
+  <p>Keeping the <em>first</em> pad token as a real target is what teaches the model to emit an end-of-text marker; masking the rest keeps the loss from being dominated by padding. <code>allowed_max_length</code> is bound to 1024 via <code>partial</code>, and <code>device</code> is passed in so tensors are built directly on the GPU (which is why <code>num_workers = 0</code> — CUDA tensors do not survive worker processes).</p>
+
+  <div class="note"><b>The −100 does not currently take effect.</b> Phase B computes loss in <code>calc_loss_batch</code> with a bare <code>F.cross_entropy(logits.flatten(0,1), target_batch.flatten())</code> — no <code>ignore_index=-100</code>. PyTorch's default <code>ignore_index</code> is −100, so the masked positions <em>are</em> skipped by luck of the default; the mask works, but only because the default happens to match. Phase A's in-model loss has the same shape and no ignore handling at all, which is harmless there since raw corpus batches contain no padding.</div>
+</section>
+
+<!-- ============ 15 ============ -->
+<section id="s15">
+  <div class="stage-head"><span class="stage-num">15</span><h2 class="stage">Fine-tuning loop</h2></div>
+  <p class="file">cells <b>66–70</b> · <code>train_model_simple</code></p>
+
+  <p>Phase B abandons the Phase A loop entirely for a conventional epoch-based one: iterate the DataLoader, <code>zero_grad → backward → step</code>, no accumulation, no scheduler, no scaler, no clipping. Every 5 steps it evaluates on 5 batches from each loader; after each epoch it greedily generates from a fixed validation prompt so drift is visible in the log.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>epochs</td><td class="num">10</td></tr>
+      <tr><td>batch size</td><td class="num">8</td></tr>
+      <tr><td>learning rate</td><td class="num">5e-5</td></tr>
+      <tr><td>weight decay</td><td class="num">0.1</td></tr>
+      <tr><td>eval_freq / eval_iter</td><td class="num">5 / 5</td></tr>
+      <tr><td>model dtype</td><td class="num">bfloat16 (cast at cell 69)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><b>The optimizer is rebuilt without the filter.</b> Cell 42 constructs a correctly filtered AdamW, but cell 70 overwrites it with <code>AdamW(model.parameters(), lr=0.00005, …)</code>. Because <code>add_lora_to_gemma3</code> already set <code>requires_grad=False</code> on the base weights, no frozen tensor receives a gradient and none is updated — the LoRA contract holds. The cost is optimizer state allocated for every frozen parameter. Restoring the <code>filter(lambda p: p.requires_grad, …)</code> from cell 42 removes that overhead.</div>
+</section>
+
+<!-- ============ 16 ============ -->
+<section id="s16">
+  <div class="stage-head"><span class="stage-num">16</span><h2 class="stage">Results, and why they look like that</h2></div>
+  <p class="file">cells <b>30, 31, 74</b> · README</p>
+
+  <h3>After pre-training</h3>
+  <div class="gen"><b>prompt  </b>Once upon a time there was a pumpkin.
+<b>output  </b>Once upon a time there was a pumpkin. It was who wanted to see his heart also sad. Todd right bubbles with a Anna and juicy! Once upon a time there was a sail. The house and's dance dog…</div>
+  <p>Locally grammatical, globally incoherent — the model has learned TinyStories' register, cadence and vocabulary but not long-range structure. That is the expected shape of a 270M model trained for 17 000 steps at a 128-token context.</p>
+
+  <h3>After LoRA fine-tuning</h3>
+  <div class="gen"><b>instruction  </b>Rewrite the sentence using a simile.
+<b>input        </b>The car is very fast.
+<b>response     </b>The moral of the word, the little girl is ' is ' is ' is 'I'm sorry.</div>
+  <p>The output collapses into a loop and reaches for storybook phrasing ("The moral of…"). Four causes compound, each visible in the code above:</p>
+
+  <div class="two">
+    <div class="panel">
+      <h4>Domain mismatch</h4>
+      <p>The base model saw only children's stories. Nothing in TinyStories resembles <code>### Instruction:</code>, so the adapter must teach an entirely new register — not adapt a familiar one.</p>
+    </div>
+    <div class="panel">
+      <h4>Data volume</h4>
+      <p>935 training examples over 10 epochs. Instruction-following typically needs tens of thousands; the adapter memorizes surface tokens instead of the task.</p>
+    </div>
+    <div class="panel">
+      <h4>Adapter capacity</h4>
+      <p>Rank 8 over 126 projections is roughly 1M trainable parameters against 270M frozen. LoRA steers a competent model; it cannot install a capability the base lacks.</p>
+    </div>
+    <div class="panel">
+      <h4>Greedy decoding</h4>
+      <p>Cell 74 calls <code>generate</code> at <code>temperature=0.0</code> with no <code>top_k</code>. Argmax on a low-confidence distribution locks into the highest-probability cycle, which is the repetition you see.</p>
+    </div>
+  </div>
+
+  <h3>What to change first</h3>
+  <ol class="body">
+    <li><strong>Fix <code>min_lr</code>.</strong> Set <code>eta_min</code> below <code>learning_rate</code> so the cosine leg actually decays.</li>
+    <li><strong>Mask the prompt in the loss.</strong> Currently the model is trained to reproduce the instruction text as well as the response; masking everything before <code>### Response:</code> concentrates gradient on the part that matters.</li>
+    <li><strong>Sample, don't argmax.</strong> Evaluating at <code>temperature≈0.7</code> with <code>top_k=40</code> would give a far more honest read on what the adapter learned.</li>
+    <li><strong>Raise the context.</strong> <code>block_size = 128</code> against a 512 window means the sliding-attention path is never exercised; 512+ would make the architecture's local/global split real.</li>
+    <li><strong>Pre-train on prose before instruction-tuning.</strong> Or start LoRA from a base that has already seen non-story text.</li>
+  </ol>
+
+  <footer>
+    Source: <code>gemma3-270b-from-scratch-lora-finetuning.ipynb</code>, 76 cells. Architecture follows the HuggingFace Gemma 3 reference; data pipeline adapted from karpathy/nanoGPT; instruction data and LoRA scaffolding from rasbt/LLMs-from-scratch.
+  </footer>
+</section>
+
+</main>
+</div>
+
+<script>
+// ---- draw the two mask grids ----
+(function(){
+  const N = 8, W = 4, cell = 24, pad = 0;
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  function grid(host, local){
+    for(let i=0;i<N;i++){
+      for(let j=0;j<N;j++){
+        const future  = j > i;
+        const farPast = local && (i - j >= W);
+        const r = document.createElementNS(SVGNS,"rect");
+        r.setAttribute("x", pad + j*cell);
+        r.setAttribute("y", pad + i*cell);
+        r.setAttribute("width", cell-2);
+        r.setAttribute("height", cell-2);
+        r.setAttribute("stroke","var(--rule)");
+        r.setAttribute("fill", future ? "var(--copper)" : farPast ? "var(--teal)" : "var(--paper)");
+        host.appendChild(r);
+      }
+      const li = document.createElementNS(SVGNS,"text");
+      li.setAttribute("class","svg-m");
+      li.setAttribute("x", -6);
+      li.setAttribute("y", pad + i*cell + 15);
+      li.setAttribute("text-anchor","end");
+      li.textContent = i;
+      host.appendChild(li);
+
+      const lj = document.createElementNS(SVGNS,"text");
+      lj.setAttribute("class","svg-m");
+      lj.setAttribute("x", pad + i*cell + 10);
+      lj.setAttribute("y", pad + N*cell + 14);
+      lj.setAttribute("text-anchor","middle");
+      lj.textContent = i;
+      host.appendChild(lj);
+    }
+  }
+  const a = document.getElementById("gA"), b = document.getElementById("gB");
+  if(a) grid(a,false);
+  if(b) grid(b,true);
+})();
+
+// ---- rail scroll-spy ----
+(function(){
+  const links = Array.from(document.querySelectorAll(".rail a"));
+  if(!links.length) return;
+  const map = new Map(links.map(l => [l.getAttribute("href").slice(1), l]));
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        links.forEach(l => l.classList.remove("on"));
+        const l = map.get(e.target.id);
+        if(l) l.classList.add("on");
+      }
+    });
+  }, {rootMargin:"-10% 0px -75% 0px", threshold:0});
+  document.querySelectorAll("section[id]").forEach(s => obs.observe(s));
+  links[0].classList.add("on");
+})();
+</script>

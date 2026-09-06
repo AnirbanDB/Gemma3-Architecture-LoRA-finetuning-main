@@ -1,0 +1,14 @@
+# Python 3.11 (the notebook was run on 3.11.13, CUDA, NVIDIA Tesla T4)
+#
+# Install PyTorch first, matched to your CUDA version:
+#   https://pytorch.org/get-started/locally/
+# The pin below is the generic build; on CPU-only machines it works but
+# pre-training is not practical.
+
+torch>=2.1
+numpy>=1.24
+tiktoken>=0.5.0
+datasets>=2.14.0
+tqdm>=4.65
+matplotlib>=3.7
+ipython>=8.0
